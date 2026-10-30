@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NiyamSetu · Regulation-aware approval workflow</title>
+<meta name="description" content="NiyamSetu routes AICTE applications by statutory category, tracks deadlines and signs every decision into a verifiable audit trail. Prototype with synthetic data.">
+<meta name="theme-color" content="#FCF6E9">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2317306B'/%3E%3Cpath d='M5 22q11-15 22 0' stroke='%23E9B15F' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:light;--bg:#FCF6E9;--s1:#FFFBF3;--s2:#F4EAD4;--ink:#16224A;--mut:#6A675C;--line:#E7DABB;--pri:#17306B;--pric:#FBF7EC;--ok:#1F6B3B;--warn:#9A5200;--bad:#A3271D;--okb:#DCE8D0;--warnb:#F6E0B5;--badb:#F2D3C8;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font:15px/1.55 'Plus Jakarta Sans',system-ui,sans-serif}
+.mono,code{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12.5px}
+a{color:inherit}button{font:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+.top{display:flex;align-items:center;gap:14px;padding:10px 20px;border-bottom:1px solid var(--line);background:var(--s1);position:sticky;top:0;z-index:5}
+.logo{font-weight:700;font-size:18px;letter-spacing:.2px;display:flex;align-items:center;gap:9px;text-decoration:none}
+.logo svg{width:30px;height:20px}
+.sp{flex:1}
+.who{font-size:13px;color:var(--mut)}
+.shell{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 56px)}
+nav.side{border-right:1px solid var(--line);padding:18px 12px;display:flex;flex-direction:column;gap:2px}
+nav.side a{padding:9px 12px;border-radius:8px;text-decoration:none;color:var(--mut);font-weight:500}
+nav.side a.on{background:var(--pri);color:var(--pric)}
+nav.side a:hover:not(.on){background:var(--s2)}
+main{padding:28px 32px 60px;max-width:1080px;width:100%}
+h1{font-size:26px;margin:0 0 4px;font-weight:700;letter-spacing:-.3px}
+h2{font-size:16px;margin:0 0 10px}
+.sub{color:var(--mut);margin:0 0 22px;max-width:62ch}
+.card{background:var(--s1);border:1px solid var(--line);border-radius:10px;padding:18px}
+.grid{display:grid;gap:14px}.g4{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.kpi b{display:block;font-size:30px;font-weight:700;line-height:1.1}.kpi span{color:var(--mut);font-size:13px}
+.badge{display:inline-flex;gap:5px;align-items:center;padding:2px 9px;border-radius:99px;font-size:12px;font-weight:600;white-space:nowrap}
+.b-ok{background:var(--okb);color:var(--ok)}.b-warn{background:var(--warnb);color:var(--warn)}.b-bad{background:var(--badb);color:var(--bad)}.b-n{background:var(--s2);color:var(--mut)}
+.sim{border:1px dashed var(--warn);color:var(--warn);border-radius:4px;padding:0 6px;font-size:11px;font-weight:600;text-decoration:none;margin-left:6px}
+.btn{background:var(--pri);color:var(--pric);border:0;border-radius:8px;padding:9px 16px;font-weight:600}
+.btn.alt{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn:disabled{opacity:.5;cursor:default}
+table{width:100%;border-collapse:collapse}th{text-align:left;font-size:13px;color:var(--mut);font-weight:600}
+th,td{padding:10px 8px;border-bottom:1px solid var(--line)}tr:last-child td{border-bottom:0}
+tr.row{cursor:pointer}tr.row:hover td{background:var(--s2)}
+.step{display:flex;gap:6px;margin:6px 0 20px;flex-wrap:wrap}
+.step i{font-style:normal;padding:5px 12px;border-radius:99px;background:var(--s2);color:var(--mut);font-size:13px}
+.step i.on{background:var(--pri);color:var(--pric)}.step i.done{background:var(--okb);color:var(--ok)}
+.banner{background:var(--s2);border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:8px;padding:10px 14px;font-size:13.5px;margin-bottom:18px}
+.persona{display:grid;gap:10px}
+.persona button{text-align:left;background:var(--s1);border:1px solid var(--line);border-radius:10px;padding:14px 16px;color:var(--ink)}
+.persona button:hover{border-color:var(--pri)}.persona b{display:block}.persona span{color:var(--mut);font-size:13px}
+.login{max-width:900px;margin:0 auto;padding:56px 24px;display:grid;grid-template-columns:1.1fr 1fr;gap:48px;align-items:center}
+.login h1{font-size:40px;line-height:1.1}
+.bridge{display:flex;gap:10px;margin:22px 0;flex-wrap:wrap}.bridge span{border-left:2px solid var(--pri);padding-left:9px;font-size:13px;color:var(--mut)}.bridge b{display:block;color:var(--ink);font-size:14px}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.field{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line)}.field:last-child{border:0}
+.field span:first-child{color:var(--mut)}
+input[type=number]{font:inherit;width:90px;padding:6px 8px;border:1px solid var(--pri);border-radius:6px;background:var(--bg);color:var(--ink)}
+.diff{display:grid;grid-template-columns:150px 1fr 24px 1fr;gap:10px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.diff .ch{background:var(--warnb);border-radius:6px;padding:6px 9px;font-weight:600}.diff .old{color:var(--mut);text-decoration:line-through;text-decoration-color:var(--line)}
+.diff.same .ch{background:none;font-weight:400;padding:6px 0}
+.bar{height:20px;border-radius:4px;background:var(--pri);margin:6px 0;color:var(--pric);font-size:12px;padding:0 8px;line-height:20px}
+.hash{color:var(--mut)}.tamper td{background:var(--badb)}
+.toast{margin-top:12px;padding:10px 14px;border-radius:8px;font-weight:600}
+@media(max-width:760px){.shell{grid-template-columns:1fr}nav.side{flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line);padding:8px}nav.side a{white-space:nowrap}main{padding:20px 16px 50px}.login{grid-template-columns:1fr;padding:30px 16px}.cmp{grid-template-columns:1fr}.diff{grid-template-columns:1fr;gap:4px}.diff .ar{display:none}.who{display:none}.mx{overflow-x:auto}}
+.wrap{max-width:1080px;margin:0 auto;padding:0 32px}
+.sc{position:fixed;top:0;left:0;height:3px;background:var(--pri);width:0;z-index:9}
+.hero{display:grid;grid-template-columns:1.1fr 1fr;gap:40px;align-items:center;padding:70px 0 50px}
+.hero h1{font-size:46px;line-height:1.08;letter-spacing:-.8px}
+.hero svg{width:100%;height:auto;overflow:visible}
+.dr{fill:none;stroke:var(--pri);stroke-width:2.4;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;animation:dr 1.8s ease forwards;animation-delay:var(--d,0s)}
+@keyframes dr{to{stroke-dashoffset:0}}
+.tok{animation:cross 7s linear infinite;animation-delay:var(--d)}
+@keyframes cross{0%{transform:translateX(0);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translateX(330px);opacity:0}}
+.mq{overflow:hidden;border-block:1px solid var(--line);background:var(--s2);padding:14px 0}
+.mq div{display:flex;gap:44px;width:max-content;animation:mq 34s linear infinite}
+.mq:hover div{animation-play-state:paused}
+.mq span{white-space:nowrap;font-weight:600}.mq span b{color:var(--mut);font-weight:500;margin-left:10px}
+@keyframes mq{to{transform:translateX(-50%)}}
+.hs{height:320vh;position:relative}
+.hs-in{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;justify-content:center;overflow:hidden;gap:22px}
+.hs-track{display:flex;gap:20px;padding:0 32px;will-change:transform}
+.hcard{flex:0 0 min(400px,78vw);min-height:250px;display:flex;flex-direction:column;gap:10px}
+.hcard .n{font-size:54px;font-weight:700;color:var(--line);line-height:1}
+.pgb{height:3px;background:var(--line);margin:0 32px;border-radius:3px}.pgb i{display:block;height:100%;width:0;background:var(--pri);border-radius:3px}
+.rv{opacity:0;transition:opacity .7s ease,transform .8s cubic-bezier(.2,.7,.2,1)}
+.rv.l{transform:translateX(-60px)}.rv.r{transform:translateX(60px)}.rv.u{transform:translateY(24px)}
+.rv.in{opacity:1;transform:none}
+.stat{font-size:48px;font-weight:700;line-height:1}
+.cta{background:var(--pri);color:var(--pric);border-radius:14px;padding:44px;text-align:center;margin:70px 0 40px}
+.cta .btn{background:var(--pric);color:var(--pri)}
+.sec{padding:60px 0}
+@media(max-width:760px){.hero{grid-template-columns:1fr;padding-top:36px}.hero h1{font-size:34px}.wrap{padding:0 16px}.hs-track,.pgb{margin-left:0;padding-left:16px}}
+@media(prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}.hs{height:auto}.hs-in{position:static;height:auto;padding:40px 0}.hs-track{overflow-x:auto;transform:none!important}.pgb{display:none}.dr{stroke-dashoffset:0;animation:none}.tok,.mq div{animation:none}}
+@media(prefers-reduced-motion:no-preference){.fx{animation:in .35s ease}@keyframes in{from{opacity:0}to{opacity:1}}}
+.srch{font:inherit;font-size:13px;padding:7px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);width:230px}
+.bell{text-decoration:none;font-size:13px;font-weight:600;padding:6px 10px;border:1px solid var(--line);border-radius:8px}.bell b{background:var(--pri);color:var(--pric);border-radius:99px;padding:0 6px;margin-left:4px;font-size:11px}
+.crumb{font-size:13px;color:var(--mut);margin-bottom:10px}
+.card{border-radius:8px}.kpi b{font-variant-numeric:tabular-nums}
+nav.side a.on{box-shadow:inset 3px 0 0 var(--ok)}
+.pick{display:block;cursor:pointer}.pick:has(input:checked){border-color:var(--pri);box-shadow:0 0 0 1px var(--pri)}
+.drop{border:1.5px dashed var(--line);border-radius:8px;padding:22px;text-align:center;color:var(--mut);margin-bottom:12px}
+.act{display:flex;justify-content:space-between;margin-top:16px}
+.chips{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}.chips button{border:1px solid var(--line);background:var(--s1);color:var(--ink);border-radius:99px;padding:5px 14px;font-size:13px}.chips button[aria-pressed=true]{background:var(--pri);color:var(--pric);border-color:var(--pri)}
+.doc{background:var(--s2);border:1px solid var(--line);border-radius:8px;padding:18px;font-size:13.5px;line-height:1.7}.doc mark{background:var(--warnb);color:var(--ink);padding:1px 3px;border-radius:3px}
+.split{display:grid;grid-template-columns:1fr 1.5fr;gap:14px;margin-bottom:14px}
+.in{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
+.btn.sm{padding:5px 12px;font-size:13px}
+@media(max-width:760px){.split{grid-template-columns:1fr}.srch{display:none}}
+:root{--acc:#D9701A}
+.card,.btn,.badge,nav.side a,.step i,.banner,.toast,.doc,.drop{border-radius:3px}
+html{scroll-padding-top:70px}
+.tri{height:5px;background:linear-gradient(90deg,#D9701A 0 33.4%,#FBF7EC 33.4% 66.7%,#1F6B3B 66.7%)}
+.ub{background:var(--pri);color:var(--pric);font-size:12.5px}.ub .wrap{display:flex;justify-content:space-between;gap:12px;padding-block:7px;flex-wrap:wrap}.ub a{color:inherit}
+.lh{position:sticky;top:0;z-index:6;background:var(--s1);border-bottom:2px solid var(--pri)}
+.lhi{display:flex;align-items:center;gap:22px;padding-block:10px}
+.lnav{display:flex;gap:2px;flex:1}.lnav button{background:none;border:0;color:var(--ink);padding:6px 11px;font-weight:500;border-radius:3px}.lnav button:hover{background:var(--s2)}
+.L{padding:64px 0;border-top:1px solid var(--line)}
+.L h2.t{font-size:28px;letter-spacing:-.4px;margin:0 0 8px;max-width:26ch;line-height:1.15}
+.L p.lead{color:var(--mut);max-width:60ch;margin:0 0 26px}
+.h2g{display:grid;grid-template-columns:1.05fr 1fr;gap:52px;align-items:center}
+.h1{font-size:48px;line-height:1.05;letter-spacing:-1.2px;margin:0 0 16px;max-width:15ch}
+.spec{border:1px solid var(--ink);border-top:4px solid var(--acc);background:var(--s1);padding:18px;box-shadow:6px 6px 0 var(--s2)}
+.spec .hd{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:8px}
+.stats,.proc{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));border:1px solid var(--line);background:var(--s1)}
+.stats div,.proc div{padding:20px;border-left:1px solid var(--line)}.stats div:first-child,.proc div:first-child{border-left:0}
+.stats b{font-size:34px;display:block;line-height:1.1}.stats span{color:var(--mut);font-size:13.5px}
+.proc .n{font:600 13px 'JetBrains Mono',monospace;color:var(--warn)}.proc h3{margin:6px 0;font-size:17px}.proc p{margin:0 0 12px;color:var(--mut);font-size:14px}.proc em{font-style:normal;font-size:12.5px;border-top:1px solid var(--line);display:block;padding-top:8px}
+.lrow{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}.lrow span{color:var(--mut)}.lrow b{text-align:right}.lrow b.chg{background:var(--warnb);padding:0 8px;border-radius:3px}
+.lst{margin:8px 0 0;padding-left:18px;color:var(--mut)}.lst li{margin:5px 0}
+.band{background:var(--pri);color:var(--pric);padding:48px 0}.band .btn{background:var(--pric);color:var(--pri)}.band p{opacity:.85;max-width:56ch}
+.foot{background:var(--s2);border-top:2px solid var(--pri);padding:28px 0;font-size:13.5px;color:var(--mut)}.foot .wrap{display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap}
+@media(max-width:760px){.h2g{grid-template-columns:1fr;gap:28px}.h1{font-size:34px}.lnav{display:none}.lhi{justify-content:space-between}.L{padding:44px 0}.stats div,.proc div{border-left:0;border-top:1px solid var(--line)}.stats div:first-child,.proc div:first-child{border-top:0}}
+
+/* ===== Landing motion layer (scoped to body.lp) ===== */
+body.lp{--bg:#FCF6E9;--s1:#FFFBF3;--s2:#F4EAD4;--line:#E7DABB;--mut:#6A675C;--ink:#16224A;--pri:#17306B;--pric:#FBF7EC;--ok:#1F6B3B;--warn:#9A5200;--bad:#A3271D;--okb:#DCE8D0;--warnb:#F6E0B5;--badb:#F2D3C8;color-scheme:light}
+body.lp.hc,body.lp.hc *{cursor:none!important}
+body.lp #app{position:relative;z-index:1}
+.fxbg{position:fixed;inset:0;overflow:hidden;z-index:0;pointer-events:none}
+.fxbg::after{content:"";position:absolute;inset:0;background:radial-gradient(#D9C79C 1px,transparent 1.3px) 0 0/28px 28px;opacity:.45;-webkit-mask-image:linear-gradient(#000,transparent 75%);mask-image:linear-gradient(#000,transparent 75%)}
+.bl{position:absolute;border-radius:50%;filter:blur(70px);opacity:.5;will-change:transform}
+.b1{width:520px;height:520px;left:-140px;top:-100px;background:#F6C98E;animation:fl 18s ease-in-out infinite}
+.b2{width:460px;height:460px;right:-120px;top:24%;background:#C9D8F2;animation:fl 22s ease-in-out infinite reverse}
+.b3{width:440px;height:440px;left:32%;bottom:-160px;background:#CFE3C4;animation:fl 26s ease-in-out infinite}
+@keyframes fl{50%{translate:46px -34px;scale:1.12}}
+.pg{position:fixed;left:0;top:0;height:3px;width:100%;transform-origin:0 50%;transform:scaleX(0);background:linear-gradient(90deg,#D9701A,#E9B15F,#1F6B3B);z-index:50}
+.cd,.cr,.fxs{position:fixed;left:0;top:0;pointer-events:none;opacity:0}
+.cd{width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;background:var(--acc);z-index:61;transition:opacity .3s}
+.cr{width:36px;height:36px;margin:-18px 0 0 -18px;border:1.5px solid var(--pri);border-radius:50%;z-index:60;transition:width .25s,height .25s,margin .25s,background .25s,border-color .25s,opacity .3s}
+.cr.h{width:62px;height:62px;margin:-31px 0 0 -31px;background:rgba(217,112,26,.14);border-color:var(--acc)}
+.cr.dn{width:24px;height:24px;margin:-12px 0 0 -12px}
+.fxs{width:560px;height:560px;margin:-280px 0 0 -280px;border-radius:50%;background:radial-gradient(closest-side,rgba(233,177,95,.3),transparent);z-index:0;transition:opacity .4s}
+body.lp .lh{background:rgba(255,251,243,.78);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);transition:box-shadow .3s}
+body.lp .lh.hsc{box-shadow:0 8px 26px -14px rgba(23,48,107,.45)}
+.lnav button{transition:background .2s,color .2s}.lnav button.a{background:var(--s2);color:var(--pri)}
+body.lp .btn{transition:transform .2s,box-shadow .25s}body.lp .btn:hover{box-shadow:0 8px 20px -8px rgba(23,48,107,.5)}
+.w{display:inline-block;overflow:hidden;vertical-align:top;padding-bottom:.1em}
+.w>span{display:inline-block;transform:translateY(112%);animation:up .9s cubic-bezier(.2,.8,.2,1) forwards;animation-delay:calc(var(--i)*90ms + 150ms)}
+.w.hl>span{background:linear-gradient(var(--acc),var(--acc)) 0 94%/0 .09em no-repeat;animation:up .9s cubic-bezier(.2,.8,.2,1) forwards,ul .9s 1.1s ease forwards;animation-delay:calc(var(--i)*90ms + 150ms),1.1s}
+@keyframes up{to{transform:none}}@keyframes ul{to{background-size:100% .09em}}
+.fi{opacity:0;transform:translateY(20px);animation:fi .9s cubic-bezier(.2,.8,.2,1) forwards;animation-delay:var(--d,0ms)}
+@keyframes fi{to{opacity:1;transform:none}}
+.tw{perspective:1000px}
+body.lp .spec{transition:transform .3s ease-out;animation:bob 6s ease-in-out infinite;box-shadow:8px 8px 0 var(--s2),0 30px 50px -30px rgba(23,48,107,.4)}
+@keyframes bob{50%{translate:0 -8px}}
+.feed{margin-top:12px;border-top:1px dashed var(--line);padding-top:10px;font-size:12px}
+.feed .ph{display:flex;justify-content:space-between;align-items:center;color:var(--mut);margin-bottom:6px}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--ok);margin-right:6px;animation:pl 1.6s infinite}
+@keyframes pl{0%{box-shadow:0 0 0 0 rgba(31,107,59,.5)}100%{box-shadow:0 0 0 9px rgba(31,107,59,0)}}
+.feed .ln{display:flex;gap:8px;align-items:center;padding:3px 0;animation:fi2 .5s both}
+@keyframes fi2{from{opacity:0;transform:translateY(-6px)}}
+.mq{overflow:hidden;border-block:1px solid var(--line);background:rgba(255,251,243,.65);padding:13px 0;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+.mq div{display:flex;gap:38px;width:max-content;animation:mq 36s linear infinite;font:500 13px 'JetBrains Mono',monospace;color:var(--mut)}
+.mq:hover div{animation-play-state:paused}.mq b{color:var(--acc)}
+@keyframes mq{to{transform:translateX(-50%)}}
+body.lp .rv{opacity:0;transform:translateY(28px);transition:opacity .8s cubic-bezier(.2,.8,.2,1),transform .8s cubic-bezier(.2,.8,.2,1);transition-delay:var(--d,0ms)}
+body.lp .rv.in{opacity:1;transform:none}
+body.lp .rv.in.done{transition:transform .3s,box-shadow .3s,opacity .3s;transition-delay:0s}
+body.lp .card{position:relative;overflow:hidden}
+body.lp .card.done:hover{transform:translateY(-4px);box-shadow:0 18px 30px -18px rgba(23,48,107,.45)}
+body.lp .card::after{content:"";position:absolute;inset:0;background:radial-gradient(260px circle at var(--mx,50%) var(--my,50%),rgba(233,177,95,.25),transparent 60%);opacity:0;transition:opacity .3s;pointer-events:none}
+body.lp .card:hover::after{opacity:1}
+.proc{position:relative}
+.proc::before{content:"";position:absolute;left:0;top:0;height:3px;width:calc(var(--p,0)*100%);background:linear-gradient(90deg,#D9701A,#1F6B3B);transition:width 1s ease}
+body.lp .proc .n{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;border:1.5px solid var(--line);transition:all .5s .3s}
+body.lp .proc>div.in .n{background:var(--acc);color:#fff;border-color:var(--acc);box-shadow:0 0 0 6px rgba(217,112,26,.16)}
+body.lp .band{background:linear-gradient(120deg,var(--pri),#2A4A9A,var(--pri));background-size:220% 100%;animation:sh 12s ease infinite}
+@keyframes sh{50%{background-position:100% 0}}
+@media(prefers-reduced-motion:reduce){body.lp .rv{opacity:1;transform:none;transition:none}.w>span,.fi{animation:none;transform:none;opacity:1}.bl,body.lp .spec,.mq div,body.lp .band{animation:none}}
+
+/* ===== Global unification & polish (all pages) ===== */
+:root{--acc:#D9701A;--sh:0 1px 2px rgba(23,48,107,.06),0 14px 26px -20px rgba(23,48,107,.35)}
+html{-webkit-text-size-adjust:100%}
+body{background:radial-gradient(900px 520px at 6% -6%,rgba(246,201,142,.42),transparent 62%),radial-gradient(800px 520px at 100% 18%,rgba(201,216,242,.38),transparent 62%),radial-gradient(700px 500px at 40% 110%,rgba(207,227,196,.4),transparent 60%),var(--bg);background-attachment:fixed;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;font-feature-settings:"ss01","cv11"}
+body.lp{background:var(--bg)}
+input,select,textarea,button{font-family:inherit}
+h1,h2,h3{letter-spacing:-.02em;color:var(--ink)}
+::selection{background:#F6C98E;color:var(--ink)}
+*{scrollbar-width:thin;scrollbar-color:#D9C79C transparent}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:6px}
+.card,.spec,.stats,.proc{border-radius:14px}.stats,.proc{overflow:hidden}
+.card{position:relative;box-shadow:var(--sh);border-color:var(--line)}
+.btn{border-radius:10px}.badge{border-radius:99px}.step i{border-radius:99px}
+.banner,.toast,.doc,.drop{border-radius:10px}nav.side a{border-radius:10px}.lnav button{border-radius:8px}
+.top{background:rgba(255,251,243,.8);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+@media(min-width:761px){nav.side{position:sticky;top:58px;align-self:start;height:calc(100vh - 58px);background:rgba(255,251,243,.35)}}
+nav.side a{transition:background .2s,color .2s,transform .2s}nav.side a:hover:not(.on){transform:translateX(3px)}
+nav.side a.on{background:linear-gradient(135deg,var(--pri),#2A4A9A);box-shadow:inset 3px 0 0 var(--acc),0 8px 18px -10px rgba(23,48,107,.6)}
+.btn{transition:transform .15s,box-shadow .25s,background .2s}.btn:hover:not(:disabled){box-shadow:0 8px 18px -8px rgba(23,48,107,.5);transform:translateY(-1px)}.btn:active:not(:disabled){transform:translateY(1px);box-shadow:none}
+.btn.alt:hover:not(:disabled){background:var(--s2);box-shadow:none}
+.card,.persona button,.bell{transition:transform .25s,box-shadow .25s,border-color .25s}
+tr.row td{transition:background .15s}.persona button:hover{transform:translateY(-2px);box-shadow:var(--sh)}
+.kpi::before{content:"";position:absolute;left:18px;top:0;width:30px;height:3px;background:var(--acc);border-radius:0 0 3px 3px}
+.kpi b{background:linear-gradient(135deg,var(--ink),var(--pri));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.srch,.in,input[type=number]{transition:box-shadow .2s,border-color .2s;background:var(--s1)}
+.srch:focus,.in:focus,input[type=number]:focus{outline:0;border-color:var(--acc);box-shadow:0 0 0 3px rgba(217,112,26,.18)}
+.step i.on{box-shadow:0 0 0 4px rgba(23,48,107,.12)}
+.diff .ch{animation:hl 1.8s ease}@keyframes hl{from{background:#F2B866}}
+.badge,.sim{letter-spacing:.01em}.sim{border-radius:99px;padding:0 8px;background:rgba(246,224,181,.5)}
+.hash,.mono,code{font-variant-ligatures:none}
+th{text-transform:uppercase;letter-spacing:.06em;font-size:11.5px}
+.crumb a{text-decoration:none;color:var(--pri)}.crumb a:hover{text-decoration:underline}
+.foot{background:rgba(244,234,212,.7)}
+@keyframes pe{from{opacity:0;transform:translateY(10px)}}
+.toast{animation:pe .35s ease both}
+@media(prefers-reduced-motion:no-preference){#app.pe>*{animation:pe .5s cubic-bezier(.2,.8,.2,1) both}#app.pe>.lh{animation:none}}
+@media(prefers-reduced-motion:reduce){.btn,.card,nav.side a,.persona button{transition:none}.diff .ch{animation:none}}
+@media print{.top,nav.side,.fxbg,.pg,.cd,.cr,.fxs{display:none!important}body{background:#fff}}
+</style></head><body>
+<div id="app"></div>
+<script>
+const B=(t,c,i)=>`<span class="badge b-${c}"><span aria-hidden="true">${i}</span>${t}</span>`;
+const SIM='<a class="sim" href="#transparency">Simulated</a>';
+const ST={ver:B('Verified','ok','✓'),ro:B('Awaiting RO','warn','◐'),od:B('Overdue','bad','▲'),evc:B('EVC eligible','ok','●'),def:B('Returned','bad','↩'),sub:B('Submitted','n','○')};
+const ROLES={
+ inst:{n:'Institution',who:'Sri Venkateswara Institute of Technology',home:'inst',nav:[['inst','Dashboard'],['new','New application'],['obl','Obligations'],['docs','Document vault']]},
+ ro:{n:'Regional Officer',who:'R. Menon · Central Region',home:'ro',nav:[['ro','Dashboard'],['queue','Case queue'],['scrutiny','Scrutiny workspace'],['rehearsal','Rehearsal sandbox'],['evc','EVC scheduling']]},
+ bureau:{n:'Regulation Bureau',who:'A. Kapoor · HQ',home:'bureau',nav:[['bureau','National dashboard'],['rules','Rules & workflows'],['audit','Audit trail']]}
+};
+let role=null,tamper=false,ran=false,lease=25,verified=null;
+const logo=`<a class="logo" href="#login"><svg viewBox="0 0 30 20" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M2 17V9m26 8V9M2 9c6-10 20-10 26 0M9 17V8m6 9V4m6 13V8"/></svg>NiyamSetu</a>`;
+const shell=(route,body)=>`<header class="top">${logo}<div class="sp"></div><input class="srch" type="search" aria-label="Search cases" placeholder="Search case or institution" onkeydown="if(event.key=='Enter')go('scrutiny')"><span class="who">${ROLES[role].who}</span><a class="bell" href="#notif" aria-label="Alerts, 4 unread">Alerts<b>4</b></a>
+<label class="who">View as <select aria-label="Switch demo persona" onchange="go(this.value)">${Object.entries(ROLES).map(([k,v])=>`<option value="${k}" ${k==role?'selected':''}>${v.n}</option>`).join('')}</select></label>${SIM.replace('Simulated','Demo persona')}</header>
+<div class="shell"><nav class="side" aria-label="Main">${ROLES[role].nav.map(([r,l])=>`<a href="#${r}" class="${r==route?'on':''}"${r==route?' aria-current="page"':''}>${l}</a>`).join('')}<a href="#transparency" style="margin-top:auto">What’s real vs simulated</a></nav><main class="fx"><div class="crumb">${ROLES[role].n} / ${(ROLES[role].nav.find(n=>n[0]==route)||[0,'Alerts'])[1]}</div>${body}</main></div>`;
+const kpi=a=>`<div class="grid g4">${a.map(([n,l])=>`<div class="card kpi"><b>${n}</b><span>${l}</span></div>`).join('')}</div>`;
+
+const V={
+login:()=>`<div class="login fx"><div>${logo}<h1 style="margin-top:28px">Every case on the right path.</h1>
+<p class="sub">NiyamSetu connects a regulation to the action it governs, so each AICTE approval is routed, timed and traceable from submission to decision.</p>
+<div class="bridge"><span><b>Submit</b>institution files</span><span><b>Route</b>by statutory category</span><span><b>Verify</b>officer checks evidence</span><span><b>Decide</b>competent authority</span></div>
+<div class="banner">All accounts and data are synthetic. See <a href="#transparency">what’s real and what’s simulated</a>.</div></div>
+<div><h2>Choose a demo role</h2><div class="persona">${Object.entries(ROLES).map(([k,v])=>`<button onclick="go('${k}')"><b>${v.n}</b><span>${v.who}</span></button>`).join('')}</div>
+<p class="who" style="margin-top:14px">Regional Officer and Bureau roles require two-step verification in the full build.</p></div></div>`,
+
+inst:()=>shell('inst',`<h1>Good morning, Sri Venkateswara Institute</h1><p class="sub">Two items need your action before their deadlines.</p>
+${kpi([[3,'Active applications'],[2,'Obligations due soon'],[1,'Documents expiring'],[4,'Unread notifications']])}
+<div class="card" style="margin-top:14px"><h2>Needs your action</h2><div class="mx"><table><tr><th>Item</th><th>Status</th><th>Due</th></tr>
+<tr><td>Fire safety certificate: renew<br><span class="mono hash">DOC-0412</span></td><td>${B('Expires in 12 days','bad','▲')}</td><td>11 Nov 2026</td></tr>
+<tr><td>Lease deed: correct tenure and resubmit<br><span class="mono hash">APP-2026-0014</span></td><td>${ST.def}</td><td>6 Nov 2026</td></tr>
+<tr><td>Faculty undertaking: upload evidence</td><td>${B('Due in 21 days','warn','◐')}</td><td>20 Nov 2026</td></tr></table></div></div>
+<div class="card" style="margin-top:14px"><h2>Application APP-2026-0014 · New institute (LOA)</h2>
+<div class="step"><i class="done">✓ Submitted</i><i class="on">Scrutiny</i><i>EVC visit</i><i>Hearing</i><i>Decision</i></div>
+<p class="who">Governed by workflow <span class="mono">LOA v3.1</span>, pinned when you applied. Stage deadline: 6 days left.</p></div>`),
+
+new:()=>shell('new',`<h1>New application</h1><p class="sub">Choose a category. The statutory route that will govern your case appears immediately.</p>
+<div class="grid g2">${[['New institute (LOA)','Submitted → Scrutiny → EVC visit → Hearing → Decision'],['Extension of approval, standard','Submitted → Scrutiny → Decision'],['Extension, 3-year merit track','Submitted → Eligibility check → Decision'],['Infrastructure modification','Submitted → EVC visit → Hearing → Decision']].map(([t,r],i)=>`<label class="card" style="display:block;cursor:pointer"><input type="radio" name="c" ${i==0?'checked':''}> <b>${t}</b><div class="who mono" style="margin-top:8px">${r}</div></label>`).join('')}</div>
+<p class="who" style="margin-top:14px">Route patterns are prototype routes, pending confirmation against the current Approval Process Handbook.</p><button class="btn" style="margin-top:8px" onclick="alert('Next: details, documents, review.')">Continue to details</button>`),
+
+ro:()=>shell('ro',`<h1>Central Region</h1><p class="sub">Oldest cases first. Open one to scrutinise or rehearse.</p>
+${kpi([[18,'Pending'],[3,'Overdue'],[4,'EVC eligible'],[5,'Obligations to review']])}
+<div class="card" style="margin-top:14px"><h2>Case queue</h2><div class="mx"><table><tr><th>Case</th><th>Category</th><th>Stage</th><th>Age</th><th>Status</th></tr>
+${[['APP-2026-0014','LOA','Scrutiny','31 days',ST.ro],['APP-2026-0009','EOA standard','Scrutiny','44 days',ST.od],['APP-2026-0021','Infra modification','EVC','12 days',ST.evc],['APP-2026-0003','EOA 3-year merit','Eligibility','6 days',ST.ver]].map(r=>`<tr class="row" tabindex="0" onclick="go('scrutiny')" onkeydown="if(event.key=='Enter')go('scrutiny')"><td class="mono">${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td></tr>`).join('')}</table></div></div>`),
+
+rehearsal:()=>shell('rehearsal',`<h1>Rehearsal sandbox · APP-2026-0014</h1><p class="sub">Test a change against the whole case before you act. Nothing here touches the real record.</p>
+<div class="banner"><b>Simulation only</b> · <span class="mono">production_modified: false</span> · runs in an isolated database schema with a read-only role.</div>
+<div class="cmp"><div class="card"><h2>Baseline (real case)</h2>
+<div class="field"><span>Lease tenure</span><span>25 years</span></div><div class="field"><span>Rule: tenure ≥ 30 years</span><span>${B('Fails','bad','▲')}</span></div><div class="field"><span>EVC eligibility</span><span>No</span></div><div class="field"><span>Stage deadline</span><span>6 Nov 2026</span></div><div class="field"><span>Evidence source</span><span>Declared · not verified</span></div></div>
+<div class="card" style="border-color:var(--pri)"><h2>Hypothetical edit</h2><div class="field"><span><label for="l">Lease tenure (years)</label></span><span><input id="l" type="number" min="1" max="99" value="${lease}" onchange="lease=+this.value;ran=false"></span></div>
+<p class="who">Try 30 or more to see the effect ripple through the case.</p><button class="btn" onclick="ran=true;go('rehearsal');document.getElementById('rr').scrollIntoView({block:'nearest'})">Run rehearsal</button></div></div>
+${ran?(()=>{const p=lease>=30;const rows=[['Rule outcome','Fails',p?'Passes':'Fails'],['Stage eligibility','Scrutiny only',p?'Scrutiny and EVC':'Scrutiny only'],['EVC eligibility','No',p?'Yes':'No'],['Stage deadline','6 Nov 2026',p?'9 Nov 2026':'6 Nov 2026'],['Notification',' None',p?'“Case cleared for EVC scheduling” to institution':'None']];
+return `<div class="card fx" id="rr" style="margin-top:14px"><h2>What changes</h2>${rows.map(r=>`<div class="diff ${r[1].trim()==r[2].trim()?'same':''}"><b>${r[0]}</b><span class="old">${r[1]}</span><span class="ar" aria-hidden="true">→</span><span class="ch">${r[2]}</span></div>`).join('')}
+<p class="who">${p?'Notification preview is simulated and was not sent. ':'No downstream effect: the rule still fails. '}${SIM}</p>
+<div style="display:flex;gap:10px;margin-top:8px"><button class="btn" onclick="go('scrutiny')">Apply in scrutiny workspace</button><button class="btn alt" onclick="ran=false;go('rehearsal')">Discard</button></div></div>`})():''}`),
+
+bureau:()=>shell('bureau',`<h1>National overview</h1><p class="sub">All regions, same filters as every export.</p>
+${kpi([[212,'Open cases'],[17,'Overdue'],[9,'Escalations this week'],['94%','Alerts delivered on time']])}
+<div class="grid g2" style="margin-top:14px"><div class="card"><h2>Pendency by stage</h2>${[['Scrutiny',100],['EVC visit',62],['Hearing',28],['Decision',14]].map(([l,w])=>`<div>${l}<div class="bar" style="width:${w}%">${Math.round(w*1.1)}</div></div>`).join('')}</div>
+<div class="card"><h2>Overdue by region</h2>${[['Central',6],['Southern',4],['Western',3],['Eastern',2],['Northern',2]].map(([l,w])=>`<div>${l}<div class="bar" style="width:${w*16}%;background:var(--warn)">${w}</div></div>`).join('')}</div></div>`),
+
+audit:()=>shell('audit',`<h1>Audit trail</h1><p class="sub">Each entry is chained to the one before and digitally signed.</p>
+<div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap"><button class="btn" onclick="verified=tamper?'bad':'ok';go('audit')">Verify chain integrity</button><button class="btn alt" onclick="tamper=!tamper;verified=null;go('audit')">${tamper?'Undo tamper':'Inject a tamper (demo)'}</button></div>
+${verified?`<div class="toast ${verified=='ok'?'b-ok':'b-bad'}" role="status">${verified=='ok'?'✓ All 6 entries verified. Chain intact.':'▲ Verification failed at entry #4: the stored hash no longer matches its contents.'}</div>`:''}
+<div class="card mx" style="margin-top:14px"><table><tr><th>#</th><th>Actor</th><th>Action</th><th>Case</th><th>Hash</th></tr>
+${[['R. Menon','Returned for correction','0014'],['Institution','Resubmitted','0014'],['R. Menon','Ran rehearsal (simulation)','0014'],['R. Menon','Advanced to EVC','0014'],['System','15-day alert sent','0014'],['A. Kapoor','Acknowledged escalation','0009']].map((r,i)=>`<tr class="${tamper&&i==3?'tamper':''}"><td>${i+1}</td><td>${r[0]}</td><td>${r[1]}${tamper&&i==3?' '+B('Altered','bad','▲'):''}</td><td class="mono">${r[2]}</td><td class="mono hash">${tamper&&i==3?'e0f1…77aa':'a'+(i+3)+'c9…'+(i*7+11)+'d2'}</td></tr>`).join('')}</table></div>`),
+
+transparency:()=>`<div style="max-width:840px;margin:0 auto;padding:36px 20px" class="fx">${logo}<h1 style="margin-top:24px">What’s real and what’s simulated</h1><p class="sub">Anything backed by a mock adapter carries a ${SIM} tag everywhere in the app.</p>
+<div class="card mx"><table><tr><th>Capability</th><th>Status</th><th>Path to real</th></tr>
+${[['Workflow engine, routing, deadline scheduler, rehearsal sandbox, signed audit ledger','ok','Real','Hardening and load tests'],['Bank or external financial confirmation','warn','Simulated','Inter-agency agreement'],['SMS and WhatsApp delivery','warn','Simulated','Authorised NIC or Meta Business account'],['AICTE existing-system integration','warn','Mock records','AICTE IT coordination'],['EVC GPS geotagging','warn','Simulated','Device-level geofencing in a field app']].map(r=>`<tr><td>${r[0]}</td><td>${B(r[2],r[1],r[1]=='ok'?'✓':'◐')}</td><td>${r[3]}</td></tr>`).join('')}</table></div>
+<p><a href="#${role?ROLES[role].home:'login'}">Back to the app</a></p></div>`
+};
+let ws=0,cat=0,flt='All',vf=[0,0,0],sch=0,pv=0;
+const CATS=[['New institute (LOA)','Submitted → Scrutiny → EVC visit → Hearing → Decision','LOA v3.1'],['Extension of approval, standard','Submitted → Scrutiny → Decision','EOA-S v2.4'],['Extension, 3-year merit track','Submitted → Eligibility check → Decision','EOA-3Y v1.2'],['Infrastructure modification','Submitted → EVC visit → Hearing → Decision','INFRA v2.0']];
+const wz=n=>`<div class="step" aria-label="Step ${n+1} of 4">${['Category','Details','Documents','Review'].map((l,i)=>`<i class="${i<n?'done':i==n?'on':''}">${i<n?'✓ ':''}${l}</i>`).join('')}</div>`;
+function nx(d){ws+=d;if(ws>3){ws=0;go('inst');return}go('new')}
+function cf(i){vf[i]=1;go('scrutiny')}
+const CASES=[['APP-2026-0014','LOA','Scrutiny','31 days','6 Nov 2026','R. Menon',ST.ro,'Scrutiny'],['APP-2026-0009','EOA standard','Scrutiny','44 days','28 Oct 2026','S. Iyer',ST.od,'Overdue'],['APP-2026-0021','Infra modification','EVC','12 days','19 Nov 2026','R. Menon',ST.evc,'EVC eligible'],['APP-2026-0003','EOA 3-year merit','Eligibility','6 days','24 Nov 2026','S. Iyer',ST.ver,'Scrutiny']];
+const tbl=(h,rows)=>`<div class="mx"><table><tr>${h.map(x=>`<th>${x}</th>`).join('')}</tr>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</table></div>`;
+Object.assign(V,{
+new:()=>shell('new',`<h1>New application</h1><p class="sub">Four steps. The statutory route is pinned to your case when you submit.</p>${wz(ws)}`+[
+`<div class="grid g2">${CATS.map((c,i)=>`<label class="card pick"><input type="radio" name="c" ${i==cat?'checked':''} onchange="cat=${i}"> <b>${c[0]}</b><div class="who mono" style="margin-top:8px">${c[1]}</div></label>`).join('')}</div><p class="who" style="margin-top:12px">Route patterns are prototype routes, pending confirmation against the current Approval Process Handbook.</p>`,
+`<div class="card"><div class="field"><span>Institution</span><span>Sri Venkateswara Institute of Technology</span></div><div class="field"><span>Academic year</span><span>2027–28</span></div><div class="field"><label for="ld">Lease tenure declared (years)</label><input class="in" id="ld" type="number" value="25" style="width:90px"></div></div>`,
+`<div class="card"><div class="drop">Drag files here or browse. PDF or image, up to 10 MB each.</div>${tbl(['Document','Status'],[['Land and lease deed',B('Uploaded','ok','✓')],['Fire safety certificate',B('Uploaded','ok','✓')],['Building plan',B('Missing','bad','▲')]])}</div>`,
+`<div class="card"><h2>Ready to submit</h2><div class="field"><span>Category</span><span>${CATS[cat][0]}</span></div><div class="field"><span>Workflow version pinned</span><span class="mono">${CATS[cat][2]}</span></div><div class="field"><span>First stage deadline</span><span>Scrutiny, 30 days</span></div><p class="who">Your case keeps this version unless an authorised migration is recorded in the audit trail.</p></div>`][ws]
++`<div class="act"><button class="btn alt" ${ws?'':'disabled'} onclick="nx(-1)">Back</button><button class="btn" onclick="nx(1)">${ws<3?'Continue':'Submit application'}</button></div>`),
+queue:()=>shell('queue',`<h1>Case queue</h1><p class="sub">Filter by status. Open a case to scrutinise it.</p><div class="chips" role="group" aria-label="Filter">${['All','Overdue','EVC eligible','Scrutiny'].map(f=>`<button aria-pressed="${f==flt}" onclick="flt='${f}';go('queue')">${f}</button>`).join('')}</div>
+<div class="card">${tbl(['Case','Category','Stage','Age','Deadline','Officer','Status'],CASES.filter(c=>flt=='All'||c[7]==flt).map(c=>[`<a class="mono" href="#scrutiny">${c[0]}</a>`,c[1],c[2],c[3],c[4],c[5],c[6]]))}</div>`),
+scrutiny:()=>shell('scrutiny',`<h1>Scrutiny · APP-2026-0014</h1><p class="sub">Declared, extracted and verified values stay separate. Only you can mark a value verified.</p>
+<div class="split"><div class="doc"><b>Lease deed, page 2</b><br>…the Lessor grants the premises to the Lessee for a term of <mark>twenty-five (25) years</mark> commencing <mark>1 April 2026</mark>, over land measuring <mark>4.2 acres</mark>…</div>
+<div class="card">${tbl(['Field','Declared','Extracted','Verified'],[['Lease tenure','25 years','25 years · 92%'],['Lease start','1 Apr 2026','1 Apr 2026 · 88%'],['Land area','4.2 acres','4.2 acres · 97%']].map((r,i)=>[...r,vf[i]?B('You, today','ok','✓'):`<button class="btn alt sm" onclick="cf(${i})">Confirm</button>`]))}<p class="who" style="margin:10px 0 0">Extraction is a suggestion with a confidence score, never a verification.</p></div></div>
+<div class="card"><h2>Decision</h2><div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><label for="rs" class="who">Reason</label><input class="in" id="rs" style="flex:1;min-width:200px" placeholder="Required to return a case"><button class="btn alt" onclick="const v=document.getElementById('rs').value.trim();document.getElementById('rm').textContent=v?'Returned to institution. Audit entry written.':'A reason is required to return a case.'">Return</button><button class="btn alt" onclick="go('evc')">Flag for EVC</button><button class="btn" onclick="go('rehearsal')">Open in rehearsal sandbox</button></div><p id="rm" class="who" role="status" style="margin:10px 0 0"></p></div>`),
+evc:()=>shell('evc',`<h1>EVC scheduling</h1><p class="sub">A completed visit is not an accepted report. Both are tracked.</p><div class="grid g2"><div class="card"><h2>Eligible: APP-2026-0021</h2><p class="who">Infra modification · Central Region</p><div class="field"><label for="dt">Visit date</label><input class="in" id="dt" type="date" value="2026-11-12"></div><button class="btn" style="margin-top:10px" onclick="sch=1;go('evc')">Schedule visit</button>${sch?`<div class="toast b-ok" role="status">Scheduled for 12 Nov. Committee notified ${SIM}</div>`:''}</div>
+<div class="card"><h2>Scheduled</h2>${tbl(['Case','Date','Status'],[['APP-2026-0017','4 Nov 2026',B('Confirmed','ok','✓')],['APP-2026-0011','7 Nov 2026',B('Report pending','warn','◐')]])}<p class="who" style="margin:10px 0 0">Rescheduling needs a recorded reason. Visit geotags are ${SIM}</p></div></div>`),
+obl:()=>shell('obl',`<h1>Obligations</h1><p class="sub">Submitted and verified are different states. A returned item keeps its history.</p><div class="card">${tbl(['Obligation','Due','Status','Action'],[['Faculty undertaking','20 Nov 2026',B('Awaiting','warn','◐'),'<button class="btn sm">Upload evidence</button>'],['Fire NOC copy','2 Nov 2026',B('Under review','n','○'),'—'],['Audited accounts','10 Oct 2026',B('Returned','bad','↩'),'<button class="btn alt sm">Resubmit</button>'],['Land use affidavit','15 Oct 2026',B('Verified','ok','✓'),'—']])}</div>`),
+docs:()=>shell('docs',`<h1>Document vault</h1><p class="sub">Renewals keep their lineage. A renewal becomes current only after officer review.</p><div class="grid g4">${[['Fire safety certificate','DOC-0412','11 Nov 2026',B('12 days left','bad','▲')],['Structural stability report','DOC-0401','14 Dec 2026',B('45 days left','warn','◐')],['Land use certificate','DOC-0388','3 Mar 2027',B('124 days left','ok','✓')]].map(d=>`<div class="card"><b>${d[0]}</b><div class="mono hash">${d[1]}</div><p class="who">Expires ${d[2]}</p>${d[3]}<div style="margin-top:12px"><button class="btn alt sm">Renew</button></div></div>`).join('')}</div>`),
+rules:()=>shell('rules',`<h1>Rules and workflows</h1><p class="sub">Published versions are immutable. A new version moves Draft, Review, Approved, Published. Nothing goes live silently.</p><div class="card">${tbl(['Definition','Version','Status','Effective'],[['New institute (LOA)','v3.1',B('Published','ok','✓'),'1 Apr 2026'],['New institute (LOA)','v3.2',B('In review','warn','◐'),'Proposed 1 Jan 2027'],['EOA standard','v2.4',B('Published','ok','✓'),'1 Apr 2026'],['Deadline policy','v5',B('Draft','n','○'),'Not set']])}<div style="display:flex;gap:10px;margin-top:14px"><button class="btn alt" onclick="pv=1;go('rules')">Preview impact of LOA v3.2</button><button class="btn" disabled>Publish needs a second approver</button></div>${pv?`<div class="toast b-warn" role="status">14 open cases would see a changed stage deadline if migrated. 31 pinned cases stay on v3.1.</div>`:''}</div>`),
+notif:()=>shell('notif',`<h1>Alerts</h1><p class="sub">Every message shows its channel and whether it was really delivered.</p><div class="card">${tbl(['Channel','Message','Status','When'],[['In-app','Case APP-2026-0014 returned for correction',B('Sent','ok','✓'),'Today'],['Email','15-day alert: fire safety certificate',B('Sent','ok','✓'),'Yesterday'],['SMS','7-day alert: faculty undertaking '+SIM,B('Simulated','warn','◐'),'28 Oct'],['WhatsApp','EVC visit scheduled '+SIM,B('Simulated','warn','◐'),'27 Oct']])}</div>`),
+audit:()=>{const h=i=>tamper&&i==3?'e0f1…77aa':`a${i+3}c9…${i*7+11}d2`;return shell('audit',`<h1>Audit trail</h1><p class="sub">Each entry holds the hash of the one before it and an Ed25519 signature. Rehearsals are logged but never change a case.</p>
+<div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap"><button class="btn" onclick="verified=tamper?'bad':'ok';go('audit')">Verify chain integrity</button><button class="btn alt" onclick="tamper=!tamper;verified=null;go('audit')">${tamper?'Undo tamper':'Inject a tamper (demo)'}</button></div>
+${verified?`<div class="toast ${verified=='ok'?'b-ok':'b-bad'}" role="status">${verified=='ok'?'✓ All 6 entries verified. Chain intact.':'▲ Verification failed at entry #4: the stored hash no longer matches its contents.'}</div>`:''}
+<div class="card" style="margin-top:14px">${tbl(['#','Actor','Action','Case','Previous → hash','Signature'],[['R. Menon','Returned for correction','0014'],['Institution','Resubmitted','0014'],['R. Menon','Ran rehearsal (simulation)','0014'],['R. Menon','Advanced to EVC','0014'],['System','15-day alert sent','0014'],['A. Kapoor','Acknowledged escalation','0009']].map((r,i)=>[i+1,r[0],r[1],`<span class="mono">${r[2]}</span>`,`<span class="mono hash">${i?h(i-1):'genesis'} → ${h(i)}</span>`,tamper&&i==3?B('Altered','bad','▲'):B('Valid','ok','✓')]))}</div>`)}
+});
+let lp=false;
+const LR=p=>[['Rule: tenure of 30 years or more',p?'Fails → Passes':'Fails'],['EVC eligibility',p?'No → Yes':'No'],['Stage deadline',p?'6 Nov → 9 Nov 2026':'6 Nov 2026'],['Notification',p?'None → “Cleared for EVC scheduling”':'None']].map(r=>`<div class="lrow"><span>${r[0]}</span><b class="${p?'chg':''}">${r[1]}</b></div>`).join('');
+function lt(){lp=!lp;document.getElementById('lpd').innerHTML=LR(lp);const b=document.getElementById('lpb');b.textContent=lp?'Reset to 25 years':'Try 30 years';b.setAttribute('aria-pressed',lp)}
+function sv(id){document.getElementById(id).scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'})}
+Object.assign(V,{landing:()=>{lp=false;return `<div class="tri"></div><div class="ub"><div class="wrap"><span>SIH26262 · AICTE, Ministry of Education · Prototype with synthetic data</span><a href="#transparency">What’s real and what’s simulated</a></div></div>
+<header class="lh"><div class="wrap lhi">${logo}<nav class="lnav" aria-label="Sections">${[['process','Process'],['routes','Routes'],['rehearsal','Rehearsal'],['roles','Roles'],['honest','Transparency']].map(([i,l])=>`<button onclick="sv('${i}')">${l}</button>`).join('')}</nav><button class="btn" onclick="go('login')">Enter demo</button></div></header>
+<main><div class="wrap L" style="border:0;padding-top:56px"><div class="h2g"><div><h1 class="h1">Every approval on its statutory route.</h1><p class="sub" style="font-size:17px">NiyamSetu routes each AICTE application by its category, keeps every deadline in view, and signs every decision into a record that can be checked later. Officers can rehearse a change before they act.</p><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" onclick="go('login')">Open the demo</button><button class="btn alt" onclick="sv('rehearsal')">See the rehearsal sandbox</button></div></div>
+<div class="spec" role="img" aria-label="Example case card"><div class="hd"><b class="mono">APP-2026-0014</b>${ST.ro}</div><div class="who" style="margin-bottom:10px">New institute (LOA) · Central Region · synthetic example</div><div class="step"><i class="done">✓ Submitted</i><i class="on">Scrutiny</i><i>EVC visit</i><i>Hearing</i><i>Decision</i></div>
+<div class="field"><span>Workflow pinned at filing</span><span class="mono">LOA v3.1</span></div><div class="field"><span>Stage deadline</span><span>${B('6 days left','warn','◐')}</span></div><div class="field"><span>Last audit entry</span><span class="mono">#3 a6c9…32d2 ${B('Signed','ok','✓')}</span></div></div></div></div>
+<div class="wrap" style="padding-bottom:56px"><div class="stats">${[[4,'statutory routes, held as versioned data'],[5,'alert stages before a deadline: 90, 60, 30, 15, 7 days'],[3,'evidence states: declared, extracted, verified'],[0,'automated approvals or rejections']].map(s=>`<div><b>${s[0]}</b><span>${s[1]}</span></div>`).join('')}</div></div>
+<section class="L" id="process"><div class="wrap"><h2 class="t">How a case moves</h2><p class="lead">Four steps, each leaving a record.</p><div class="proc">${[['01','Submit','The institution picks a category and uploads documents.','Recorded: workflow version pinned to the case'],['02','Route','The engine sends the case down its category’s route and starts the stage clock.','Recorded: stage, deadline, alert schedule'],['03','Verify and rehearse','An officer checks evidence, and can test a change against the whole case first.','Recorded: every return, with a reason'],['04','Decide','The competent authority decides. Nothing is decided by automation.','Recorded: signed, hash-chained entry']].map(p=>`<div><span class="n">${p[0]}</span><h3>${p[1]}</h3><p>${p[2]}</p><em>${p[3]}</em></div>`).join('')}</div></div></section>
+<section class="L" id="routes"><div class="wrap"><h2 class="t">Four routes, kept as data</h2><p class="lead">Each category loads an approved, versioned route. No one edits a live deadline silently. These are prototype routes, pending confirmation against the current Approval Process Handbook.</p><div class="card mx" style="padding:6px 12px">${tbl(['Category','Route','Outcome'],[['New institute (LOA)','<span class="mono">Submitted → Scrutiny → EVC visit → Hearing → Decision</span>','Letter of Approval'],['EOA, standard','<span class="mono">Submitted → Scrutiny → Decision</span>','Annual extension'],['EOA, 3-year merit','<span class="mono">Submitted → Eligibility check → Decision</span>','Multi-year extension when NIRF, NBA and NAAC thresholds are met'],['Infrastructure modification','<span class="mono">Submitted → EVC visit → Hearing → Decision</span>','Approval of the change']])}</div></div></section>
+<section class="L" id="rehearsal"><div class="wrap"><div class="h2g"><div><h2 class="t">Rehearse a change on the whole case before you act</h2><p class="lead">Most checks tell you whether one rule passes. The sandbox shows what else moves: the stage, the EVC eligibility, the deadline and the notification that would fire. It runs in an isolated schema and cannot write to the real case.</p><ul class="lst"><li>The baseline stays read-only.</li><li>Applying a change is a separate, audited action.</li><li>Every rehearsal is logged.</li></ul></div>
+<div class="card"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:6px"><b>Lease tenure: 25 years</b><button class="btn alt sm" id="lpb" aria-pressed="false" onclick="lt()">Try 30 years</button></div><div id="lpd" aria-live="polite">${LR(false)}</div><p class="who mono" style="margin:12px 0 0">production_modified: false ${SIM}</p></div></div></div></section>
+<section class="L" id="roles"><div class="wrap"><h2 class="t">One shell, four roles</h2><p class="lead">Each person sees only their own work, scoped by region and institution on the server.</p><div class="grid g4">${[['Institution','Apply, track every stage and renew documents before they lapse.','inst'],['Regional Officer','Scrutinise evidence, rehearse a change, then act on the real case.','ro'],['EVC and SAC committees','Confirm visits, record findings and submit reports.',0],['Regulation Bureau','Watch every region, govern the rules and verify the audit chain.','bureau']].map(r=>`<div class="card" style="border-top:3px solid var(--pri);display:flex;flex-direction:column;gap:10px"><h2 style="margin:0">${r[0]}</h2><p class="who" style="margin:0;flex:1">${r[1]}</p>${r[2]?`<button class="btn alt sm" onclick="go('${r[2]}')">Enter as ${r[0]}</button>`:`<button class="btn alt sm" disabled>Not in this demo</button>`}</div>`).join('')}</div></div></section>
+<section class="L" id="honest"><div class="wrap"><h2 class="t">Stated up front: real and simulated</h2><p class="lead">Every simulated element carries a visible tag in the interface, not only a note in a document.</p><div class="grid g2"><div class="card"><h2>${B('Real','ok','✓')} in this prototype</h2><ul class="lst"><li>Workflow engine and statutory routing</li><li>Deadline scheduler and escalation ladder</li><li>Rehearsal sandbox and signed audit ledger</li></ul></div><div class="card"><h2>${B('Simulated','warn','◐')} and tagged</h2><ul class="lst"><li>SMS and WhatsApp delivery</li><li>Bank confirmation and EVC GPS geotags</li><li>AICTE existing-system records</li></ul></div></div><p style="margin-top:14px"><a href="#transparency">Read the full table, with the path to real for each item</a></p></div></section></main>
+<section class="band"><div class="wrap"><h2 style="font-size:26px;margin:0 0 8px">Walk through a case in five minutes</h2><p>Pick a role and follow the path from filing to the rehearsal sandbox to the audit check.</p><button class="btn" onclick="go('login')">Open the demo</button></div></section>
+<footer class="foot"><div class="wrap"><span>Prototype for SIH26262. All accounts and data are synthetic. Not an official AICTE system.</span><a href="#transparency">Transparency</a></div></footer>`}});
+function go(r){if(ROLES[r]){role=r;r=ROLES[r].home}location.hash=r;draw()}
+function kc(){if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;document.querySelectorAll('.kpi b').forEach(b=>{const t=b.textContent.trim();if(!/^\d+$/.test(t))return;const n=+t,t0=performance.now(),f=x=>{const p=Math.min(1,(x-t0)/900);b.textContent=Math.round(n*(1-Math.pow(1-p,3)));if(p<1)requestAnimationFrame(f)};requestAnimationFrame(f)})}
+function fx(){
+ const RM=matchMedia('(prefers-reduced-motion:reduce)').matches,FP=matchMedia('(hover:hover) and (pointer:fine)').matches;
+ const bd=document.body,ac=new AbortController(),o={signal:ac.signal},T=[],X=[],q=(s,r=document)=>[...r.querySelectorAll(s)];let raf=0;
+ const mk=(c,h='')=>{const d=document.createElement('div');d.className=c;d.innerHTML=h;bd.append(d);X.push(d);return d};
+ bd.classList.add('lp');
+ const bg=mk('fxbg','<i class="bl b1"></i><i class="bl b2"></i><i class="bl b3"></i>'),pg=mk('pg');
+ /* hero entrance */
+ const h1=q('.h1')[0];
+ if(h1&&!RM){h1.innerHTML=h1.textContent.trim().split(' ').map((w,i)=>`<span class="w${w=='statutory'?' hl':''}"><span style="--i:${i}">${w}</span></span>`).join(' ');
+  q('.h1~*').forEach((e,i)=>{e.classList.add('fi');e.style.setProperty('--d',700+i*120+'ms')})}
+ /* live case card */
+ const sp=q('.spec')[0];
+ if(sp){
+  if(!RM){const w=document.createElement('div');w.className='fi tw';w.style.setProperty('--d','450ms');sp.before(w);w.append(sp)}
+  sp.insertAdjacentHTML('beforeend',`<div class="field"><span>Stage clock · live</span><span class="mono" id="clk">5d 23h 59m 59s</span></div><div class="feed" aria-hidden="true"><div class="ph"><span><i class="dot"></i>Live audit ledger</span>${SIM}</div><div id="lg"></div></div>`);
+  const lg=q('#lg')[0],clk=q('#clk')[0],st=q('.step i',sp),L=['Submitted','Scrutiny','EVC visit','Hearing','Decision'],ev=['Stage advanced','Evidence verified','Deadline recalculated','Alert dispatched'];
+  let k=1,n=3,s=6*86400-1;
+  const hx=()=>Math.random().toString(16).slice(2,6)+'…'+Math.random().toString(16).slice(2,4);
+  const log=()=>{lg.insertAdjacentHTML('afterbegin',`<div class="ln"><span class="mono">#${n}</span><span class="mono">${hx()}</span><span style="flex:1">${ev[n%4]}</span>${B('Signed','ok','✓')}</div>`);while(lg.children.length>3)lg.lastChild.remove()};
+  log();
+  if(!RM){
+   T.push(setInterval(()=>{s--;clk.textContent=`${Math.floor(s/86400)}d ${Math.floor(s%86400/3600)}h ${Math.floor(s%3600/60)}m ${s%60}s`},1000));
+   T.push(setInterval(()=>{k=k%4+1;n++;st.forEach((e,j)=>{e.className=j<k?'done':j==k?'on':'';e.textContent=(j<k?'✓ ':'')+L[j]});log()},3400));
+   const tw=q('.tw')[0];
+   addEventListener('mousemove',e=>{const r=tw.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;sp.style.transform=Math.hypot(x,y)<1.1?`rotateY(${x*10}deg) rotateX(${-y*10}deg)`:''},o);
+  }
+ }
+ /* marquee */
+ const it=['LOA','EOA standard','EOA 3-year merit','EVC visit','SAC / SHC hearing','Signed audit ledger','Rehearsal sandbox','90 · 60 · 30 · 15 · 7 day alerts','A human decides'],m=it.map(t=>`<span><b>◆</b> ${t}</span>`).join('');
+ const pr0=document.getElementById('process');if(pr0)pr0.insertAdjacentHTML('beforebegin',`<div class="mq" aria-hidden="true"><div>${m}${m}</div></div>`);
+ /* cursor */
+ if(FP&&!RM){
+  const cd=mk('cd'),cr=mk('cr'),fs=mk('fxs'),all=[cd,cr,fs];let mx=0,my=0,rx=0,ry=0,on=0;
+  addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;if(!on){on=1;rx=mx;ry=my;bd.classList.add('hc');all.forEach(x=>x.style.opacity=1)}cr.classList.toggle('h',!!(e.target.closest&&e.target.closest('a,button,.card,input')))},o);
+  addEventListener('mousedown',()=>cr.classList.add('dn'),o);addEventListener('mouseup',()=>cr.classList.remove('dn'),o);
+  document.documentElement.addEventListener('mouseleave',()=>{on=0;bd.classList.remove('hc');all.forEach(x=>x.style.opacity=0)},o);
+  const loop=()=>{rx+=(mx-rx)*.16;ry+=(my-ry)*.16;cd.style.transform=`translate(${mx}px,${my}px)`;cr.style.transform=`translate(${rx}px,${ry}px)`;fs.style.transform=`translate(${rx}px,${ry}px)`;raf=requestAnimationFrame(loop)};loop();
+  q('.btn').forEach(b=>{b.addEventListener('mousemove',e=>{const r=b.getBoundingClientRect();b.style.transform=`translate(${(e.clientX-r.left-r.width/2)*.18}px,${(e.clientY-r.top-r.height/2)*.28}px)`},o);b.addEventListener('mouseleave',()=>b.style.transform='',o)});
+ }
+ q('.card').forEach(c=>c.addEventListener('mousemove',e=>{const r=c.getBoundingClientRect();c.style.setProperty('--mx',e.clientX-r.left+'px');c.style.setProperty('--my',e.clientY-r.top+'px')},o));
+ /* scroll: progress, header, parallax */
+ const hd=q('.lh')[0],pr=q('.proc')[0],bl=[...bg.querySelectorAll('.bl')];
+ const sc=()=>{const y=scrollY,mx=document.documentElement.scrollHeight-innerHeight;pg.style.transform=`scaleX(${mx>0?y/mx:0})`;hd&&hd.classList.toggle('hsc',y>8);if(!RM)bl.forEach((b,i)=>b.style.transform=`translateY(${y*[.12,-.08,-.15][i]}px)`)};
+ addEventListener('scroll',sc,{signal:ac.signal,passive:true});sc();
+ /* reveal on scroll */
+ const io=new IntersectionObserver(es=>es.forEach(en=>{if(!en.isIntersecting)return;const e=en.target;e.classList.add('in');io.unobserve(e);setTimeout(()=>e.classList.add('done'),1400);if(pr&&e.parentElement==pr)pr.style.setProperty('--p',q(':scope>.in',pr).length/4)}),{threshold:.15,rootMargin:'0px 0px -6% 0px'});
+ const cu=new IntersectionObserver(es=>es.forEach(en=>{if(!en.isIntersecting)return;cu.unobserve(en.target);q('b',en.target).forEach(b=>{const t=+b.textContent;if(!t)return;const t0=performance.now(),f=nw=>{const p=Math.min(1,(nw-t0)/1300);b.textContent=Math.round(t*(1-Math.pow(1-p,3)));if(p<1)requestAnimationFrame(f)};b.textContent=0;requestAnimationFrame(f)})}),{threshold:.4});
+ if(!RM){const cnt=new Map();q('.L h2.t,.L p.lead,.stats>div,.proc>div,.card,.lst li,tbody tr,.band .wrap').forEach(e=>{const p=e.parentElement,n=cnt.get(p)||0;cnt.set(p,n+1);e.style.setProperty('--d',n*90+'ms');e.classList.add('rv');io.observe(e)});q('.stats').forEach(s=>cu.observe(s))}
+ /* scrollspy */
+ const ids=['process','routes','rehearsal','roles','honest'],nb=q('.lnav button');
+ const ss=new IntersectionObserver(es=>es.forEach(en=>{if(en.isIntersecting){const i=ids.indexOf(en.target.id);nb.forEach((b,j)=>b.classList.toggle('a',i==j))}}),{rootMargin:'-45% 0px -50% 0px'});
+ ids.forEach(i=>{const e=document.getElementById(i);e&&ss.observe(e)});
+ window.__fxd=()=>{ac.abort();T.forEach(clearInterval);cancelAnimationFrame(raf);io.disconnect();cu.disconnect();ss.disconnect();X.forEach(x=>x.remove());bd.classList.remove('lp','hc');window.__fxd=null};
+}
+function draw(){window.__fxd&&window.__fxd();const r=location.hash.slice(1)||'landing';const v=V[r]&&(r=='login'||r=='landing'||r=='transparency'||role)?r:'landing';window.onscroll=null;const ap=document.getElementById('app'),ch=window.__v!==v;ap.className=ch?'pe':'';ap.innerHTML=V[v]();if(ch)scrollTo(0,0);window.__v=v;if(ch&&v!='landing')kc();if(v=='landing')fx()}
+addEventListener('hashchange',draw);draw();
+</script></body></html>
